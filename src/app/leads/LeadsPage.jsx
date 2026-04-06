@@ -153,7 +153,7 @@ export default function LeadsPage() {
   //         <RefreshCw className="mr-2 h-4 w-4" /> Retry
   //       </Button>
   //     </div>
-    // );
+  // );
   // }
   const isFetching = false;
 
@@ -211,7 +211,7 @@ export default function LeadsPage() {
               value={filters.source}
               onValueChange={(value) => handleFilterChange("source", value)}
             >
-              <SelectTrigger  className="w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Sources" />
               </SelectTrigger>
               <SelectContent>
@@ -232,7 +232,7 @@ export default function LeadsPage() {
               value={filters.status}
               onValueChange={(value) => handleFilterChange("status", value)}
             >
-              <SelectTrigger  className="w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -269,7 +269,7 @@ export default function LeadsPage() {
               value={filters.isArchived.toString()}
               onValueChange={(value) => handleFilterChange("isArchived", value === "true")}
             >
-              <SelectTrigger  className="w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Archived Status" />
               </SelectTrigger>
               <SelectContent>
@@ -367,7 +367,7 @@ export default function LeadsPage() {
                               href={lead.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline block truncate max-w-[200px]"
+                              className="text-xs text-blue-600 hover:underline block truncate max-w-50"
                             >
                               {lead.website.replace(/^https?:\/\//, '')}
                             </a>
@@ -410,7 +410,7 @@ export default function LeadsPage() {
                             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                               <div className="flex items-center gap-1">
                                 <Mail className="h-3 w-3" />
-                                <span className="truncate max-w-[120px]">
+                                <span className="truncate max-w-30">
                                   {lead.contacts.find(c => c.isPrimary).email}
                                 </span>
                               </div>
