@@ -72,7 +72,7 @@ export default function LeadsPage() {
     status: "",
     isArchived: false,
   });
-
+  // Leads data
   const [searchInput, setSearchInput] = useState("");
 
   // const {
