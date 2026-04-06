@@ -50,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Leads from "@/data/lead-management.leads.json" with { type: 'json' };
+import LeadDetailsModal from './components/LeadsDialog';
 
 const fetchLeads = async (params) => {
   try {
@@ -84,6 +85,17 @@ export default function LeadsPage() {
   //   queryFn: () => fetchLeads(filters),
   //   keepPreviousData: true,
   // });
+
+  // Add this state in your Leads component
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Add this function to handle opening the modal
+  const handleViewLead = (lead) => {
+    setSelectedLead(lead);
+    setIsModalOpen(true);
+  };
+
 
   // Handle filter changes
   const handleFilterChange = (key, value) => {
@@ -445,7 +457,7 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewLead(lead)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           {lead.isArchived && (
@@ -461,6 +473,12 @@ export default function LeadsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <LeadDetailsModal
+        lead={selectedLead}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }
