@@ -74,6 +74,7 @@ export default function LeadsPage() {
   });
   // Leads data
   const [searchInput, setSearchInput] = useState("");
+  const [searchInput1, setSearchInput1] = useState("");
 
   // const {
   //   data,
