@@ -49,6 +49,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Leads from "@/data/lead-management.leads.json" with { type: 'json' };
 
 const fetchLeads = async (params) => {
   try {
@@ -59,7 +60,7 @@ const fetchLeads = async (params) => {
   }
 };
 
-export default function Leads() {
+export default function LeadsPage() {
   // Filter states
   const [filters, setFilters] = useState({
     page: 1,
@@ -74,16 +75,16 @@ export default function Leads() {
 
   const [searchInput, setSearchInput] = useState("");
 
-  const {
-    data,
-    isFetching,
-    isError,
-    refetch
-  } = useQuery({
-    queryKey: ["leads-data", filters],
-    queryFn: () => fetchLeads(filters),
-    keepPreviousData: true,
-  });
+  // const {
+  //   data,
+  //   isFetching,
+  //   isError,
+  //   refetch
+  // } = useQuery({
+  //   queryKey: ["leads-data", filters],
+  //   queryFn: () => fetchLeads(filters),
+  //   keepPreviousData: true,
+  // });
 
   // Handle filter changes
   const handleFilterChange = (key, value) => {
@@ -107,7 +108,10 @@ export default function Leads() {
 
   // Pagination handlers
   const nextPage = () => {
-    if (data?.pages > filters.page) {
+    // if (data?.pages > filters.page) {
+    //   setFilters(prev => ({ ...prev, page: prev.page + 1 }));
+    // }
+    if (3 > filters.page) {
       setFilters(prev => ({ ...prev, page: prev.page + 1 }));
     }
   };
@@ -133,20 +137,24 @@ export default function Leads() {
     return statusMap[status] || 'default';
   };
 
-  const leads = data?.leads || [];
-  const totalCount = data?.leadsCount || 0;
-  const totalPages = data?.pages || 1;
+  // const leads = data?.leads || [];
+  const leads = Leads || [];
+  // const totalCount = data?.leadsCount || 0;
+  const totalCount = 116;
+  // const totalPages = data?.pages || 1;
+  const totalPages = 3;
 
-  if (isError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4">
-        <p className="text-red-500">Error loading leads</p>
-        <Button onClick={() => refetch()} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" /> Retry
-        </Button>
-      </div>
-    );
-  }
+  // if (isError) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center h-96 gap-4">
+  //       <p className="text-red-500">Error loading leads</p>
+  //       <Button onClick={() => refetch()} variant="outline">
+  //         <RefreshCw className="mr-2 h-4 w-4" /> Retry
+  //       </Button>
+  //     </div>
+    // );
+  // }
+  const isFetching = false;
 
   return (
     <div className="mx-auto py-6 px-2">
@@ -158,10 +166,10 @@ export default function Leads() {
             Manage and track your leads across all sources
           </p>
         </div>
-        <Button onClick={() => refetch()} variant="outline" disabled={isFetching}>
+        {/* <Button onClick={() => refetch()} variant="outline" disabled={isFetching}>
           <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
-        </Button>
+        </Button> */}
       </div>
 
       {/* Filters Card */}
@@ -282,14 +290,15 @@ export default function Leads() {
       <div className="flex justify-between items-center mb-4 text-sm text-muted-foreground">
         <div>
           Showing {leads.length} of {totalCount} leads
-          {isFetching && <Loader2 className="inline ml-2 h-3 w-3 animate-spin" />}
+          {/* {isFetching && <Loader2 className="inline ml-2 h-3 w-3 animate-spin" />} */}
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={prevPage}
-            disabled={filters.page === 1 || isFetching}
+            // disabled={filters.page === 1 || isFetching}
+            disabled={filters.page === 1}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -301,7 +310,8 @@ export default function Leads() {
             variant="outline"
             size="sm"
             onClick={nextPage}
-            disabled={filters.page === totalPages || isFetching}
+            // disabled={filters.page === totalPages || isFetching}
+            disabled={filters.page === totalPages}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />
