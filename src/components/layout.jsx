@@ -4,16 +4,12 @@ import { Outlet } from "react-router-dom";
 
 export default function Layout({ children }) {
   return (
-    <SidebarProvider>
+    <main className="flex h-screen overflow-hidden">
+
       <AppSidebar />
-      <main className="w-full">
-        <div className="flex justify-between pr-4">
-          <SidebarTrigger />
-          <div className="flex gap-0.5 items-center">
-          </div>
-        </div>
+      <div className="flex-1 overflow-y-auto">
         <Outlet />
-      </main>
-    </SidebarProvider>
+      </div>
+    </main>
   );
 }

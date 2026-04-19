@@ -27,13 +27,13 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
-            const errorMessage = error.response.data.message;
-            if (errorMessage === "Token Unauthorized") {
-                localStorage.removeItem("AppID");
-                window.location.href = process.env.NODE_ENV === "production" ? "http://localhost:5174/login" : "http://localhost:5174/login";
-            }
-        }
+        // if (error.response && error.response.status === 401) {
+        //     const errorMessage = error.response.data.message;
+        //     if (errorMessage === "Token Unauthorized") {
+        //         localStorage.removeItem("AppID");
+        //         window.location.href = process.env.NODE_ENV === "production" ? "http://localhost:5173/login" : "http://localhost:5173/login";
+        //     }
+        // }
 
         return Promise.reject(error);
     }

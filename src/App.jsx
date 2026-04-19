@@ -3,6 +3,7 @@ import AppRoutes from "./routes";
 import { Toaster } from 'sonner'
 import ErrorFallback from "./components/ErrorFallback";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
     // defaultOptions: {
@@ -26,7 +27,10 @@ function App() {
         <QueryClientProvider client={queryClient}>
             <ErrorBoundary FallbackComponent={ErrorFallback} onReset={handleReset}>
                 <Toaster />
-                <AppRoutes />
+                <AuthProvider>
+                    <AppRoutes />
+                    <Toaster richColors={true}/>
+                </AuthProvider>
             </ErrorBoundary>
         </QueryClientProvider>
     );
