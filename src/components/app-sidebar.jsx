@@ -52,7 +52,7 @@ const items = [
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", active: true },
   { icon: Users, label: "Leads" },
-  { icon: RefreshCw, label: "Follow-ups" },
+  { icon: RefreshCw, label: "Proposal" },
   { icon: Trophy, label: "Deals" },
   { icon: FileText, label: "Policies" },
   { icon: BarChart2, label: "Reports" },

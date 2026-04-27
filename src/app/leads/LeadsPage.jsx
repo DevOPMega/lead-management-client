@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Axios from '../../lib/axios';
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom"
 import {
   Table,
@@ -40,15 +40,41 @@ import {
   Users,
   Plus,
   Download,
+  ArrowUpRightFromSquare,
+  Edit,
+  Delete,
+  Trash2,
 } from "lucide-react";
 import LeadDetailsModal from './components/LeadsDialog';
 import { useDebounce } from '../../hooks/useDebounce';
 import UploadExcel from './components/UploadExcel';
 import ImportLeadsDialog from './components/UploadExcel';
+import { LeadStatus, Temperature } from '../../lib/constants/lead';
+import { toast } from 'sonner';
 
 const fetchLeads = async (params) => {
   try {
     const response = await Axios.get("/leads", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const fetchChangeLeadStatus = async ({ leadId, status }) => {
+  try {
+    const response = await Axios.patch("/leads/change-status", { leadId, status });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const fetchChangeLeadTemp = async ({ leadId, temp }) => {
+  try {
+    const response = await Axios.patch("/leads/change-temp", { leadId, temp });
+
     return response.data;
   } catch (error) {
     throw error;
@@ -86,7 +112,7 @@ export default function LeadsPage() {
     keepPreviousData: true,
   });
 
-  const handleViewLead = (lead) => { setSelectedLead(lead); setIsModalOpen(true); };
+  // const handleViewLead = (lead) => { setSelectedLead(lead); setIsModalOpen(true); };
   const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   const clearFilters = () => { setFilters({ page: 1, limit: 50, industry: "", city: "", country: "", source: "", status: "", isArchived: false }); setSearchInput(""); };
   const nextPage = () => { if (data?.pages > filters.page) setFilters(prev => ({ ...prev, page: prev.page + 1 })); };
@@ -96,12 +122,22 @@ export default function LeadsPage() {
     const map = {
       'new': { bg: '#eff6ff', color: '#2563eb', label: 'New' },
       'contacted': { bg: '#fffbeb', color: '#d97706', label: 'Contacted' },
-      'qualified': { bg: '#f0fdf4', color: '#16a34a', label: 'Qualified' },
-      'proposal-sent': { bg: '#f5f3ff', color: '#7c3aed', label: 'Proposal Sent' },
-      'negotiation': { bg: '#fff1f2', color: '#e11d48', label: 'Negotiation' },
+      'interested': { bg: '#f0fdf4', color: '#16a34a', label: 'Interested' },
+      'quote sent': { bg: '#f5f3ff', color: '#7c3aed', label: 'Quote Sent' },
       'won': { bg: '#f0fdf4', color: '#15803d', label: 'Won' },
       'lost': { bg: '#fef2f2', color: '#dc2626', label: 'Lost' },
-      'not-interested': { bg: '#f8fafc', color: '#64748b', label: 'Not Interested' },
+    };
+    return map[status] || { bg: '#f8fafc', color: '#64748b', label: status };
+  };
+
+  const getTempStyle = (status) => {
+    const map = {
+      'new': { bg: '#eff6ff', color: '#2563eb', label: 'New' },
+      'contacted': { bg: '#fffbeb', color: '#d97706', label: 'Contacted' },
+      'interested': { bg: '#f0fdf4', color: '#16a34a', label: 'Interested' },
+      'quote sent': { bg: '#f5f3ff', color: '#7c3aed', label: 'Quote Sent' },
+      'won': { bg: '#f0fdf4', color: '#15803d', label: 'Won' },
+      'lost': { bg: '#fef2f2', color: '#dc2626', label: 'Lost' },
     };
     return map[status] || { bg: '#f8fafc', color: '#64748b', label: status };
   };
@@ -126,6 +162,36 @@ export default function LeadsPage() {
   const hasActiveFilters = !!(filters.industry || filters.city || filters.country || filters.source || filters.status);
   const activeFilterCount = [filters.industry, filters.city, filters.country, filters.source, filters.status].filter(Boolean).length;
 
+  const leadStateMutation = useMutation({
+    mutationFn: fetchChangeLeadStatus,
+    onSuccess: (data) => {
+      toast(data.message);
+    },
+    onError: (error) => {
+      const errorMsg = error.response.data.message;
+      toast(errorMsg || "Failed to change lead status!")
+    }
+  });
+
+  const leadTempMutation = useMutation({
+    mutationFn: fetchChangeLeadTemp,
+    onSuccess: (data) => {
+      toast(data.message);
+    },
+    onError: (error) => {
+      const errorMsg = error.response.data.message;
+      toast(errorMsg || "Failed to change lead temperature!")
+    }
+  });
+
+  const handleChangeLeadStatus = async (leadId, status) => {
+    leadStateMutation.mutate({ leadId, status })
+  }
+
+  const handleChangeLeadTemperature = async (leadId, temp) => {
+    leadTempMutation.mutate({ leadId, temp })
+  }
+
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -138,32 +204,7 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: '#f8fafc', fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
-        .leads-root * { font-family: 'DM Sans', sans-serif !important; }
-        .leads-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
-        .leads-scroll::-webkit-scrollbar-track { background: transparent; }
-        .leads-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-        .tr-hover:hover td { background: #f8fafc; }
-        .status-pip {
-          display: inline-flex; align-items: center; gap: 5px;
-          padding: 3px 10px; border-radius: 999px;
-          font-size: 11px; font-weight: 600; white-space: nowrap;
-        }
-        .status-pip::before {
-          content: ''; width: 5px; height: 5px; border-radius: 50%;
-          background: currentColor; display: block; opacity: 0.7;
-        }
-        .icon-btn {
-          display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 28px; border-radius: 8px;
-          color: #94a3b8; transition: all 0.15s;
-          cursor: pointer; border: none; background: transparent;
-        }
-        .icon-btn:hover { background: #eff6ff; color: #2563eb; }
-      `}</style>
-
+    <div className="flex flex-col h-screen overflow-hidden">
       <div className="leads-root flex flex-col h-full">
 
         {/* ── HEADER ── */}
@@ -178,11 +219,6 @@ export default function LeadsPage() {
                 className="h-8 text-xs gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50">
                 <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                 Refresh
-              </Button>
-              <Button onClick={() => navigate("/leads/add-lead")} variant="outline" size="sm" disabled={isFetching}
-                className="h-8 text-xs gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50">
-                <Download className="h-3.5 w-3.5" />
-                Import
               </Button>
               <ImportLeadsDialog />
               <Button onClick={() => navigate("/leads/add-lead")} variant="outline" size="sm" disabled={isFetching}
@@ -310,12 +346,12 @@ export default function LeadsPage() {
         {/* ── TABLE AREA ── */}
         <div className="flex-1 overflow-hidden px-6 py-4">
           <div className="h-full rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
-            <div className="leads-scroll flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto">
               <Table className="min-w-240">
                 <TableHeader>
                   <TableRow className="bg-slate-50/80 border-b border-slate-100 hover:bg-slate-50/80">
-                    {["Lead / Company", "Industry", "Location", "Source", "Status", "Primary Contact", ""].map((h, i) => (
-                      <TableHead key={i} className={`text-[10px] uppercase tracking-widest text-slate-400 font-semibold py-2.5 ${i === 8 ? 'text-right' : ''}`}>
+                    {["Company", "Email", "Contact", "Status", "Temperature", "Assigne", "Menus"].map((h, i) => (
+                      <TableHead key={i} className={`text-[10px] uppercase tracking-widest text-slate-400 font-semibold py-2.5 ${i === 6 ? 'text-center' : ''}`}>
                         {h}
                       </TableHead>
                     ))}
@@ -324,14 +360,14 @@ export default function LeadsPage() {
                 <TableBody>
                   {isFetching && !leads.length ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-20">
+                      <TableCell colSpan={7} className="text-center py-20">
                         <Loader2 className="h-7 w-7 animate-spin mx-auto mb-2 text-slate-300" />
                         <p className="text-slate-400 text-sm">Loading leads…</p>
                       </TableCell>
                     </TableRow>
                   ) : leads.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-20">
+                      <TableCell colSpan={7} className="text-center py-20">
                         <Building2 className="h-10 w-10 mx-auto mb-2 text-slate-200" />
                         <p className="text-slate-400 text-sm font-medium">No leads found</p>
                         <button onClick={clearFilters} className="text-blue-500 text-xs mt-1 hover:underline">Clear filters</button>
@@ -340,19 +376,16 @@ export default function LeadsPage() {
                   ) : (
                     leads.map((lead) => {
                       const primary = lead.contacts?.find(c => c.isPrimary);
-                      const st = getStatusStyle(lead.status);
+                      const st = { bg: "green-200" };
                       const initials = lead.name?.charAt(0).toUpperCase();
+
                       return (
-                        <TableRow key={lead._id} className="tr-hover border-b border-slate-50 last:border-0">
+                        <TableRow key={lead._id} className="border-b border-slate-300 last:border-0">
                           {/* Company */}
                           <TableCell className="py-2.5">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold"
-                                style={{ background: '#eff6ff', color: '#2563eb' }}>
-                                {initials}
-                              </div>
+                            <div className="flex items-center gap-2.5 w-50">
                               <div>
-                                <div className="font-semibold text-slate-800 text-sm leading-tight">{lead.company}</div>
+                                <div className="font-semibold text-slate-800 text-sm leading-tight max-w-60 truncate block">{lead.company}</div>
                                 {lead.website && (
                                   <a href={lead.website} target="_blank" rel="noopener noreferrer"
                                     className="text-[11px] text-blue-500 hover:underline truncate block max-w-35">
@@ -363,46 +396,25 @@ export default function LeadsPage() {
                             </div>
                           </TableCell>
 
-                          {/* Industry */}
-                          <TableCell className="px-4 py-2.5">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md font-medium">
-                              <Briefcase className="h-3 w-3 text-slate-400 shrink-0" />
-                              {lead.industry}
-                            </span>
-                          </TableCell>
-
-                          {/* Location */}
-                          <TableCell className="px-4 py-2.5">
-                            <div className="flex items-center gap-1 text-xs text-slate-700">
-                              <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
-                              {lead.city}
-                            </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5 pl-4">{lead.country}</div>
-                          </TableCell>
-
-                          {/* Source */}
-                          <TableCell className="px-4 py-2.5">
-                            <span className="text-[11px] text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md font-medium whitespace-nowrap">
-                              {lead.source}
-                            </span>
-                          </TableCell>
-
-                          {/* Status */}
-                          <TableCell className="px-4 py-2.5">
-                            <span className="status-pip" style={{ background: st.bg, color: st.color }}>
-                              {st.label}
-                            </span>
+                          {/* Email */}
+                          <TableCell className="px-4 py-2.5 w-40">
+                            {primary ? (
+                              <div>
+                                {/* <div className="text-xs font-semibold text-slate-700 leading-tight">{primary.name}</div> */}
+                                <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
+                                  <Mail className="h-3 w-3 shrink-0" />
+                                  <span>{primary.email}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-300 italic">—</span>
+                            )}
                           </TableCell>
 
                           {/* Contact */}
-                          <TableCell className="px-4 py-2.5">
+                          <TableCell className="px-4 py-2.5 w-24">
                             {primary ? (
                               <div>
-                                <div className="text-xs font-semibold text-slate-700 leading-tight">{primary.name}</div>
-                                <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
-                                  <Mail className="h-3 w-3 shrink-0" />
-                                  <span className="truncate max-w-30">{primary.email}</span>
-                                </div>
                                 {primary.phone && (
                                   <div className="flex items-center gap-1 text-[11px] text-slate-400">
                                     <Phone className="h-3 w-3 shrink-0" />
@@ -415,11 +427,67 @@ export default function LeadsPage() {
                             )}
                           </TableCell>
 
+                          {/* Status */}
+                          <TableCell className="px-4 py-2.5 w-28">
+                            <Select value={lead.status} onValueChange={value => handleChangeLeadStatus(lead._id, value)}>
+                              <SelectTrigger
+                                className={`w-full h-8 text-xs border-slate-200 
+                                  ${lead.status === "New" && "bg-[#eff6ff] text-[#2563eb]"}
+                                  ${lead.status === "Contacted" && "bg-[#fffbeb text-[#d97706]"}
+                                  ${lead.status === "Interested" && "bg-[#f0fdf4] text-[#16a34a]"}
+                                  ${lead.status === "Quote Sent" && "bg-[#f5f3ff] text-[#7c3aed]"}
+                                  ${lead.status === "Won" && "bg-[#f0fdf4] text-[#15803d]"}
+                                  ${lead.status === "Lost" && "bg-[#fef2f2] text-[#dc2626]"}
+                                `}>
+                                <SelectValue placeholder="Status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.values(LeadStatus).map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+
+                          {/* Temperature */}
+                          <TableCell className="px-4 py-2.5 w-24">
+                            <Select value={lead.temperature} onValueChange={v => handleChangeLeadTemperature(lead._id, v)}>
+                              <SelectTrigger
+                                className={`w-full h-8 text-xs border-slate-200 
+                                  ${lead.temperature === "Hot" && "bg-[#fef2f2] text-[#dc2626]"}
+                                  ${lead.temperature === "Warm" && "bg-[#fffbeb] text-[#d97706]"}
+                                  ${lead.temperature === "Cold" && "bg-[#eff6ff] text-[#2563eb]"}
+                                `}>
+                                <SelectValue placeholder="Status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.values(Temperature).map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+
+                          {/* Contact */}
+                          <TableCell className="px-4 py-2.5">
+                            {lead.assigne ? (
+                              <div>
+                                Adesh Singh
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-300 italic">—</span>
+                            )}
+                          </TableCell>
+
+
+
                           {/* Actions */}
-                          <TableCell className="px-4 py-2.5 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button className="icon-btn" onClick={() => handleViewLead(lead)}>
-                                <Eye className="h-3.5 w-3.5" />
+                          <TableCell className="px-4 py-2.5">
+                            <div className="flex items-center gap-4 justify-center ">
+                              <button className="icon-btn text-gray-500" onClick={() => navigate(`/leads/edit/${lead._id}`)}>
+                                <Edit className="size-4" />
+                              </button>
+                              <button className="icon-btn text-blue-500" onClick={() => navigate(`/leads/${lead._id}`)}>
+                                <ArrowUpRightFromSquare className="size-4" />
+                              </button>
+                              <button className="icon-btn cursor-pointer" onClick={() => {}}>
+                                <Trash2 className="size-4 text-red-500" />
                               </button>
                               {lead.isArchived && <Archive className="h-3.5 w-3.5 text-slate-300" />}
                             </div>

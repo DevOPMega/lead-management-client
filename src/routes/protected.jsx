@@ -4,8 +4,6 @@ import { useAuth } from '../hooks/useAuth';
 const ProtectedRoute = () => {
     const { user, isLoading } = useAuth();
 
-    console.log("user:", user);
-
     // 1. Show a loading spinner while the backend verifies the cookie
     if (isLoading) {
         return <div>Verifying session...</div>;

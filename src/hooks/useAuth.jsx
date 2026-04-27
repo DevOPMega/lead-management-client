@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
             try {
                 // Your backend should check the cookie and return user data
                 const response = await Axios.get('/user/me');
-                console.log("response:", response.data.user);
                 if (response.status === 200) {
                     const data = response.data.user;
                     setUser(data); // e.g., { id: 1, name: 'John' }
